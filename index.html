@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WaBot AI — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0d14;
+    --bg2: #111520;
+    --bg3: #181e2e;
+    --border: #1e2a3d;
+    --accent: #25d17a;
+    --accent2: #1aa860;
+    --accent-dim: rgba(37,209,122,0.12);
+    --blue: #4f9eff;
+    --purple: #9d6eff;
+    --orange: #ff8c42;
+    --red: #ff4d6d;
+    --yellow: #ffd166;
+    --text: #e8eaf0;
+    --text2: #8892a4;
+    --text3: #5a6478;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+    --glow: 0 0 24px rgba(37,209,122,0.15);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Space Grotesk', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Login Screen */
+  #login-screen {
+    position: fixed; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg);
+    z-index: 1000;
+  }
+  .login-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 48px;
+    width: 380px;
+    box-shadow: var(--shadow), var(--glow);
+  }
+  .login-logo {
+    text-align: center; margin-bottom: 32px;
+  }
+  .login-logo .bot-icon {
+    width: 64px; height: 64px;
+    background: var(--accent-dim);
+    border: 2px solid var(--accent);
+    border-radius: 18px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 28px; margin-bottom: 16px;
+    box-shadow: var(--glow);
+  }
+  .login-logo h1 { font-size: 22px; font-weight: 700; color: var(--text); }
+  .login-logo p { color: var(--text2); font-size: 13px; margin-top: 4px; }
+  .form-group { margin-bottom: 16px; }
+  .form-group label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 6px; font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase; }
+  .form-group input {
+    width: 100%; padding: 12px 16px;
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--text);
+    font-family: inherit; font-size: 14px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+  }
+  .form-group input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+  .btn-primary {
+    width: 100%; padding: 13px;
+    background: var(--accent); color: #000;
+    border: none; border-radius: var(--radius-sm);
+    font-family: inherit; font-size: 14px; font-weight: 700;
+    cursor: pointer; letter-spacing: 0.3px;
+    transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+  }
+  .btn-primary:hover { background: #1fba6a; box-shadow: 0 4px 16px rgba(37,209,122,0.3); }
+  .btn-primary:active { transform: scale(0.98); }
+  .login-error { color: var(--red); font-size: 13px; text-align: center; margin-top: 12px; display: none; }
+
+  /* App Layout */
+  #app { display: none; min-height: 100vh; }
+  .sidebar {
+    position: fixed; left: 0; top: 0; bottom: 0;
+    width: 220px; background: var(--bg2);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    padding: 24px 0; z-index: 100;
+  }
+  .sidebar-logo {
+    padding: 0 20px 24px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+  .sidebar-logo .logo-mark {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .sidebar-logo .logo-icon {
+    width: 36px; height: 36px;
+    background: var(--accent-dim); border: 1px solid var(--accent);
+    border-radius: 10px; display: flex; align-items: center;
+    justify-content: center; font-size: 18px;
+  }
+  .sidebar-logo h2 { font-size: 16px; font-weight: 700; }
+  .sidebar-logo span { color: var(--accent); }
+  .nav-label {
+    padding: 6px 20px;
+    font-size: 10px; color: var(--text3); letter-spacing: 1.5px;
+    text-transform: uppercase; font-weight: 600;
+    margin-top: 8px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 20px; cursor: pointer;
+    color: var(--text2); font-size: 13px; font-weight: 500;
+    transition: all 0.15s; border-left: 2px solid transparent;
+    text-decoration: none;
+  }
+  .nav-item:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+  .nav-item.active { color: var(--accent); background: var(--accent-dim); border-left-color: var(--accent); }
+  .nav-item .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+  .nav-item .badge {
+    margin-left: auto; background: var(--accent); color: #000;
+    font-size: 10px; font-weight: 700; padding: 2px 6px;
+    border-radius: 20px;
+  }
+  .sidebar-footer {
+    margin-top: auto; padding: 16px 20px;
+    border-top: 1px solid var(--border);
+  }
+  .status-dot {
+    display: inline-block; width: 8px; height: 8px;
+    background: var(--accent); border-radius: 50%;
+    margin-right: 6px; box-shadow: 0 0 6px var(--accent);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* Main Content */
+  .main { margin-left: 220px; padding: 32px; min-height: 100vh; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* Page Header */
+  .page-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 28px;
+  }
+  .page-header h1 { font-size: 22px; font-weight: 700; }
+  .page-header p { color: var(--text2); font-size: 13px; margin-top: 3px; }
+  .header-actions { display: flex; gap: 10px; }
+
+  /* Cards */
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap: 16px; margin-bottom: 24px; }
+  .stat-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px;
+    position: relative; overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .stat-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .stat-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0;
+    height: 2px; background: var(--accent-gradient, var(--accent));
+    opacity: 0.6;
+  }
+  .stat-card.blue::before { --accent-gradient: var(--blue); }
+  .stat-card.purple::before { --accent-gradient: var(--purple); }
+  .stat-card.orange::before { --accent-gradient: var(--orange); }
+  .stat-card.red::before { --accent-gradient: var(--red); }
+  .stat-icon { font-size: 24px; margin-bottom: 12px; }
+  .stat-value { font-size: 28px; font-weight: 700; line-height: 1; margin-bottom: 4px; font-family: 'JetBrains Mono', monospace; }
+  .stat-label { font-size: 12px; color: var(--text2); font-weight: 500; }
+  .stat-sub { font-size: 11px; color: var(--text3); margin-top: 6px; }
+
+  /* Charts */
+  .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 24px; }
+  .chart-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px;
+  }
+  .chart-card h3 { font-size: 14px; font-weight: 600; margin-bottom: 16px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; }
+  .chart-card canvas { max-height: 240px; }
+
+  /* Tables */
+  .table-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden;
+    margin-bottom: 16px;
+  }
+  .table-header {
+    padding: 16px 20px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .table-header h3 { font-size: 14px; font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    padding: 10px 20px; text-align: left;
+    font-size: 11px; color: var(--text3); font-weight: 600;
+    letter-spacing: 0.5px; text-transform: uppercase;
+    background: var(--bg3);
+  }
+  td {
+    padding: 12px 20px; font-size: 13px;
+    border-top: 1px solid var(--border);
+    color: var(--text2);
+  }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+  td .mono { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+
+  /* Badges */
+  .badge-tier {
+    display: inline-block; padding: 2px 8px;
+    border-radius: 20px; font-size: 11px; font-weight: 600;
+  }
+  .badge-free { background: rgba(255,255,255,0.06); color: var(--text2); }
+  .badge-vip { background: rgba(255,209,102,0.15); color: var(--yellow); }
+  .badge-premium { background: rgba(157,110,255,0.15); color: var(--purple); }
+  .badge-owner { background: rgba(37,209,122,0.15); color: var(--accent); }
+
+  /* Controls */
+  .controls { display: flex; gap: 10px; align-items: center; }
+  .search-input {
+    padding: 8px 14px; background: var(--bg3);
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    color: var(--text); font-family: inherit; font-size: 13px;
+    outline: none; width: 220px;
+    transition: border-color 0.2s;
+  }
+  .search-input:focus { border-color: var(--accent); }
+  .btn {
+    padding: 8px 14px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border); background: var(--bg3);
+    color: var(--text2); font-family: inherit; font-size: 13px;
+    cursor: pointer; transition: all 0.15s; font-weight: 500;
+  }
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-sm { padding: 4px 10px; font-size: 12px; }
+  .btn-success { border-color: var(--accent); color: var(--accent); }
+  .btn-danger { border-color: var(--red); color: var(--red); }
+  .btn-danger:hover { background: rgba(255,77,109,0.1); }
+
+  /* Toggle */
+  .toggle {
+    position: relative; display: inline-block;
+    width: 36px; height: 20px; cursor: pointer;
+  }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider {
+    position: absolute; inset: 0;
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 20px; transition: 0.2s;
+  }
+  .toggle-slider::before {
+    content: ''; position: absolute;
+    width: 14px; height: 14px; left: 2px; top: 2px;
+    background: var(--text3); border-radius: 50%; transition: 0.2s;
+  }
+  .toggle input:checked + .toggle-slider { background: var(--accent-dim); border-color: var(--accent); }
+  .toggle input:checked + .toggle-slider::before { transform: translateX(16px); background: var(--accent); }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.2s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 16px; padding: 28px; width: 440px;
+    transform: translateY(10px); transition: transform 0.2s;
+    max-height: 90vh; overflow-y: auto;
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal h2 { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+  .modal .form-group { margin-bottom: 14px; }
+  .modal select {
+    width: 100%; padding: 10px 14px;
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--text);
+    font-family: inherit; font-size: 14px; outline: none;
+  }
+  .modal-actions { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
+
+  /* Provider Status */
+  .provider-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .provider-chip {
+    padding: 4px 12px; border-radius: 20px; font-size: 12px;
+    font-weight: 600; display: flex; align-items: center; gap: 6px;
+  }
+  .provider-chip.active { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(37,209,122,0.3); }
+  .provider-chip.inactive { background: rgba(255,255,255,0.04); color: var(--text3); border: 1px solid var(--border); }
+  .provider-chip .dot { width: 6px; height: 6px; border-radius: 50%; }
+  .provider-chip.active .dot { background: var(--accent); }
+  .provider-chip.inactive .dot { background: var(--text3); }
+
+  /* Memory bar */
+  .mem-bar { height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; margin-top: 8px; }
+  .mem-bar-fill { height: 100%; border-radius: 3px; transition: width 0.5s; }
+
+  /* Responsive tweaks */
+  @media (max-width: 900px) {
+    .sidebar { width: 60px; }
+    .sidebar-logo h2, .nav-item span, .nav-label, .sidebar-footer { display: none; }
+    .main { margin-left: 60px; padding: 20px; }
+    .charts-grid { grid-template-columns: 1fr; }
+  }
+
+  /* Animations */
+  @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+  .page.active { animation: fadeIn 0.25s ease; }
+  .stat-card { animation: fadeIn 0.3s ease both; }
+</style>
+</head>
+<body>
+
+<!-- Login -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="bot-icon">🤖</div>
+      <h1>WaBot AI</h1>
+      <p>Admin Dashboard</p>
+    </div>
+    <div class="form-group">
+      <label>Username</label>
+      <input type="text" id="login-user" placeholder="admin" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn-primary" onclick="login()">Login</button>
+    <p class="login-error" id="login-error">Username atau password salah.</p>
+  </div>
+</div>
+
+<!-- App -->
+<div id="app">
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">
+        <div class="logo-icon">🤖</div>
+        <h2>Wa<span>Bot</span></h2>
+      </div>
+    </div>
+    <span class="nav-label">Overview</span>
+    <a class="nav-item active" onclick="showPage('dashboard')" href="#">
+      <span class="nav-icon">📊</span><span>Dashboard</span>
+    </a>
+    <a class="nav-item" onclick="showPage('analytics')" href="#">
+      <span class="nav-icon">📈</span><span>Analytics</span>
+    </a>
+    <span class="nav-label">Management</span>
+    <a class="nav-item" onclick="showPage('users')" href="#">
+      <span class="nav-icon">👥</span><span>Users</span>
+    </a>
+    <a class="nav-item" onclick="showPage('groups')" href="#">
+      <span class="nav-icon">💬</span><span>Groups</span>
+    </a>
+    <a class="nav-item" onclick="showPage('redeem')" href="#">
+      <span class="nav-icon">🎫</span><span>Redeem</span>
+    </a>
+    <span class="nav-label">System</span>
+    <a class="nav-item" onclick="showPage('ai-logs')" href="#">
+      <span class="nav-icon">🤖</span><span>AI Logs</span>
+    </a>
+    <div class="sidebar-footer">
+      <div style="font-size:12px;color:var(--text2)">
+        <span class="status-dot"></span>Online
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-top:6px" id="bot-version">v1.0.0</div>
+    </div>
+  </nav>
+
+  <main class="main">
+    <!-- Dashboard Page -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <div>
+          <h1>Dashboard</h1>
+          <p>Overview bot WaBot AI — real-time monitoring</p>
+        </div>
+        <div class="header-actions">
+          <span style="font-size:12px;color:var(--text3)" id="last-update">–</span>
+        </div>
+      </div>
+
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">👥</div>
+          <div class="stat-value" id="s-users">–</div>
+          <div class="stat-label">Total Users</div>
+          <div class="stat-sub" id="s-vip">– VIP/Premium</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-icon">💬</div>
+          <div class="stat-value" id="s-groups">–</div>
+          <div class="stat-label">Total Groups</div>
+          <div class="stat-sub" id="s-active">– aktif hari ini</div>
+        </div>
+        <div class="stat-card purple">
+          <div class="stat-icon">🤖</div>
+          <div class="stat-value" id="s-ai-today">–</div>
+          <div class="stat-label">AI Requests (Hari Ini)</div>
+          <div class="stat-sub" id="s-ai-total">– total</div>
+        </div>
+        <div class="stat-card orange">
+          <div class="stat-icon">⚡</div>
+          <div class="stat-value" id="s-queue">–</div>
+          <div class="stat-label">AI Queue</div>
+          <div class="stat-sub" id="s-uptime">Uptime: –</div>
+        </div>
+      </div>
+
+      <!-- Memory Usage -->
+      <div class="chart-card" style="margin-bottom:16px">
+        <h3>System Resources</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:4px">
+              <span>Heap Memory</span><span id="heap-label">– MB</span>
+            </div>
+            <div class="mem-bar"><div class="mem-bar-fill" id="heap-bar" style="width:0%;background:var(--accent)"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:4px">
+              <span>RSS Memory</span><span id="rss-label">– MB</span>
+            </div>
+            <div class="mem-bar"><div class="mem-bar-fill" id="rss-bar" style="width:0%;background:var(--blue)"></div></div>
+          </div>
+        </div>
+        <div style="margin-top:16px">
+          <div style="font-size:12px;color:var(--text2);margin-bottom:8px">AI Providers</div>
+          <div class="provider-grid" id="provider-list"></div>
+        </div>
+      </div>
+
+      <div class="charts-grid">
+        <div class="chart-card">
+          <h3>AI Requests (7 Hari)</h3>
+          <canvas id="chart-ai"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>Provider Distribution</h3>
+          <canvas id="chart-providers"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Analytics Page -->
+    <div class="page" id="page-analytics">
+      <div class="page-header">
+        <div><h1>Analytics</h1><p>Data penggunaan bot detail</p></div>
+        <div class="controls">
+          <select class="search-input" id="analytics-days" onchange="loadAnalytics()" style="width:120px">
+            <option value="7">7 Hari</option>
+            <option value="14">14 Hari</option>
+            <option value="30">30 Hari</option>
+          </select>
+        </div>
+      </div>
+      <div class="charts-grid" style="grid-template-columns:1fr 1fr">
+        <div class="chart-card">
+          <h3>AI Requests Harian</h3>
+          <canvas id="chart-analytics-ai"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>User Baru</h3>
+          <canvas id="chart-analytics-users"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h3>Token Usage</h3>
+        <canvas id="chart-analytics-tokens"></canvas>
+      </div>
+    </div>
+
+    <!-- Users Page -->
+    <div class="page" id="page-users">
+      <div class="page-header">
+        <div><h1>Users</h1><p>Manajemen pengguna bot</p></div>
+        <div class="controls">
+          <input class="search-input" placeholder="Cari nama/nomor..." id="user-search" oninput="searchUsers()">
+        </div>
+      </div>
+      <div class="table-card">
+        <div class="table-header">
+          <h3>Daftar User</h3>
+          <span style="font-size:12px;color:var(--text3)" id="user-count">–</span>
+        </div>
+        <table>
+          <thead>
+            <tr><th>User</th><th>Tier</th><th>Level</th><th>Koin</th><th>AI Hari Ini</th><th>Bergabung</th><th>Aksi</th></tr>
+          </thead>
+          <tbody id="users-table"></tbody>
+        </table>
+        <div style="padding:12px 20px;display:flex;gap:8px;align-items:center" id="user-pagination"></div>
+      </div>
+    </div>
+
+    <!-- Groups Page -->
+    <div class="page" id="page-groups">
+      <div class="page-header">
+        <div><h1>Groups</h1><p>Konfigurasi grup bot</p></div>
+      </div>
+      <div class="table-card">
+        <div class="table-header"><h3>Daftar Grup</h3></div>
+        <table>
+          <thead>
+            <tr><th>Grup</th><th>AI</th><th>Anti Link</th><th>Anti Spam</th><th>Anti Kata Kasar</th><th>Welcome</th></tr>
+          </thead>
+          <tbody id="groups-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Redeem Page -->
+    <div class="page" id="page-redeem">
+      <div class="page-header">
+        <div><h1>Redeem Codes</h1><p>Buat dan kelola kode VIP</p></div>
+        <button class="btn btn-success" onclick="openRedeemModal()">+ Buat Kode</button>
+      </div>
+      <div class="table-card">
+        <div class="table-header"><h3>Kode Aktif</h3></div>
+        <table>
+          <thead>
+            <tr><th>Kode</th><th>Tier</th><th>Durasi</th><th>Digunakan</th><th>Max</th><th>Dibuat</th><th>Aksi</th></tr>
+          </thead>
+          <tbody id="redeem-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- AI Logs Page -->
+    <div class="page" id="page-ai-logs">
+      <div class="page-header">
+        <div><h1>AI Logs</h1><p>Log penggunaan AI terkini</p></div>
+        <button class="btn" onclick="loadAILogs()">🔄 Refresh</button>
+      </div>
+      <div class="table-card">
+        <table>
+          <thead>
+            <tr><th>User</th><th>Provider</th><th>Model</th><th>Tokens</th><th>Status</th><th>Waktu</th></tr>
+          </thead>
+          <tbody id="ai-logs-table"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Modals -->
+<div class="modal-overlay" id="redeem-modal">
+  <div class="modal">
+    <h2>🎫 Buat Kode Redeem</h2>
+    <div class="form-group"><label>Tier</label>
+      <select id="rm-tier"><option value="vip">⭐ VIP</option><option value="premium">💎 Premium</option></select>
+    </div>
+    <div class="form-group"><label>Durasi (hari)</label>
+      <input type="number" id="rm-days" value="30" min="1" max="365" class="search-input" style="width:100%">
+    </div>
+    <div class="form-group"><label>Max Penggunaan</label>
+      <input type="number" id="rm-uses" value="1" min="1" class="search-input" style="width:100%">
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('redeem-modal')">Batal</button>
+      <button class="btn btn-success" onclick="createRedeemCode()">Buat Kode</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="user-modal">
+  <div class="modal">
+    <h2 id="um-title">Edit User</h2>
+    <input type="hidden" id="um-jid">
+    <div class="form-group"><label>Tier</label>
+      <select id="um-tier">
+        <option value="free">🆓 Free</option>
+        <option value="vip">⭐ VIP</option>
+        <option value="premium">💎 Premium</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Durasi (hari, jika VIP/Premium)</label>
+      <input type="number" id="um-days" value="30" min="1" class="search-input" style="width:100%">
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('user-modal')">Batal</button>
+      <button class="btn btn-success" onclick="saveUser()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = '';
+let TOKEN = localStorage.getItem('wabot_token') || '';
+let aiChart, providerChart, analyticsAiChart, analyticsUsersChart, analyticsTokensChart;
+let wsConn;
+let userPage = 1;
+
+// ===== Auth =====
+async function login() {
+  const user = document.getElementById('login-user').value;
+  const pass = document.getElementById('login-pass').value;
+  try {
+    const r = await fetch('/api/auth/login', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ username: user, password: pass })
+    });
+    if (r.ok) {
+      const d = await r.json();
+      TOKEN = d.token;
+      localStorage.setItem('wabot_token', TOKEN);
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      document.getElementById('bot-version').textContent = d.botName || 'WaBot';
+      initApp();
+    } else {
+      document.getElementById('login-error').style.display = 'block';
+    }
+  } catch { document.getElementById('login-error').style.display = 'block'; }
+}
+
+document.getElementById('login-pass').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+
+async function api(path, opts = {}) {
+  const r = await fetch('/api' + path, {
+    ...opts,
+    headers: { 'Authorization': 'Bearer ' + TOKEN, 'Content-Type': 'application/json', ...(opts.headers || {}) }
+  });
+  if (r.status === 401) { localStorage.removeItem('wabot_token'); location.reload(); }
+  return r.json();
+}
+
+function initApp() {
+  if (TOKEN) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+  }
+  loadDashboard();
+  connectWS();
+  // Enter key on login
+}
+
+// ===== WebSocket =====
+function connectWS() {
+  try {
+    wsConn = new WebSocket(`ws://${location.host}?token=${TOKEN}`);
+    wsConn.onmessage = (e) => {
+      const data = JSON.parse(e.data);
+      if (data.type === 'stats_update') updateMemDisplay(data.data);
+    };
+    wsConn.onclose = () => setTimeout(connectWS, 5000);
+  } catch {}
+}
+
+// ===== Page Navigation =====
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if (name === 'dashboard') loadDashboard();
+  else if (name === 'analytics') loadAnalytics();
+  else if (name === 'users') loadUsers();
+  else if (name === 'groups') loadGroups();
+  else if (name === 'redeem') loadRedeem();
+  else if (name === 'ai-logs') loadAILogs();
+}
+
+// ===== Dashboard =====
+async function loadDashboard() {
+  const stats = await api('/stats');
+  document.getElementById('s-users').textContent = stats.users?.total || 0;
+  document.getElementById('s-vip').textContent = `${stats.users?.vip || 0} VIP/Premium`;
+  document.getElementById('s-groups').textContent = stats.groups?.total || 0;
+  document.getElementById('s-active').textContent = `${stats.groups?.activeToday || 0} aktif hari ini`;
+  document.getElementById('s-ai-today').textContent = stats.ai?.today || 0;
+  document.getElementById('s-ai-total').textContent = `${stats.ai?.total || 0} total`;
+  document.getElementById('s-queue').textContent = `${stats.ai?.queue?.pending || 0}/${stats.ai?.queue?.concurrency || 2}`;
+  document.getElementById('s-uptime').textContent = `Uptime: ${formatUptime(stats.uptime)}`;
+  document.getElementById('last-update').textContent = 'Update: ' + new Date().toLocaleTimeString('id-ID');
+
+  updateMemDisplay({ heap: stats.memory?.heap, rss: stats.memory?.rss });
+
+  // Providers
+  const provEl = document.getElementById('provider-list');
+  const allProviders = ['openai','gemini','claude','deepseek','grok','openrouter','ollama'];
+  provEl.innerHTML = allProviders.map(p => {
+    const active = (stats.providers || []).includes(p);
+    return `<div class="provider-chip ${active?'active':'inactive'}"><div class="dot"></div>${p}</div>`;
+  }).join('');
+
+  // Charts
+  const analytics = await api('/analytics?days=7');
+  renderAIChart(analytics.aiData || []);
+  renderProviderChart(analytics.providerStats || []);
+}
+
+function updateMemDisplay(d) {
+  if (!d) return;
+  const maxMem = 512;
+  document.getElementById('heap-label').textContent = `${d.heap} MB`;
+  document.getElementById('rss-label').textContent = `${d.rss} MB`;
+  document.getElementById('heap-bar').style.width = Math.min((d.heap / maxMem) * 100, 100) + '%';
+  document.getElementById('rss-bar').style.width = Math.min((d.rss / maxMem) * 100, 100) + '%';
+  const color = d.heap > 300 ? 'var(--orange)' : d.heap > 200 ? 'var(--yellow)' : 'var(--accent)';
+  document.getElementById('heap-bar').style.background = color;
+}
+
+function renderAIChart(data) {
+  const ctx = document.getElementById('chart-ai').getContext('2d');
+  if (aiChart) aiChart.destroy();
+  aiChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: data.map(d => d.date),
+      datasets: [{
+        label: 'AI Requests', data: data.map(d => d.count),
+        borderColor: '#25d17a', backgroundColor: 'rgba(37,209,122,0.08)',
+        fill: true, tension: 0.4, pointRadius: 4, pointBackgroundColor: '#25d17a',
+      }]
+    },
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: {
+      x: { grid: { color: '#1e2a3d' }, ticks: { color: '#8892a4', font: { size: 11 } } },
+      y: { grid: { color: '#1e2a3d' }, ticks: { color: '#8892a4', font: { size: 11 } } }
+    }}
+  });
+}
+
+function renderProviderChart(data) {
+  const ctx = document.getElementById('chart-providers').getContext('2d');
+  if (providerChart) providerChart.destroy();
+  const colors = ['#25d17a','#4f9eff','#9d6eff','#ff8c42','#ffd166','#ff4d6d','#06d6a0'];
+  providerChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: data.map(d => d.provider),
+      datasets: [{ data: data.map(d => d.count), backgroundColor: colors, borderWidth: 0 }]
+    },
+    options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: '#8892a4', font: { size: 11 }, padding: 12 } } }, cutout: '65%' }
+  });
+}
+
+// ===== Analytics =====
+async function loadAnalytics() {
+  const days = document.getElementById('analytics-days')?.value || 7;
+  const data = await api(`/analytics?days=${days}`);
+  renderAnalyticsCharts(data);
+}
+
+function renderAnalyticsCharts(data) {
+  const chartOpts = (color) => ({
+    responsive: true, plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: '#1e2a3d' }, ticks: { color: '#8892a4', font: { size: 10 } } },
+      y: { grid: { color: '#1e2a3d' }, ticks: { color: '#8892a4', font: { size: 10 } } }
+    }
+  });
+
+  const ai = data.aiData || [];
+  ['analytics-ai','analytics-users','analytics-tokens'].forEach(id => {
+    const el = document.getElementById('chart-' + id);
+    if (el._chart) el._chart.destroy();
+  });
+
+  const c1 = document.getElementById('chart-analytics-ai').getContext('2d');
+  document.getElementById('chart-analytics-ai')._chart = new Chart(c1, {
+    type: 'bar', data: { labels: ai.map(d=>d.date), datasets: [{ label: 'Requests', data: ai.map(d=>d.count), backgroundColor: 'rgba(37,209,122,0.5)', borderColor: '#25d17a', borderWidth: 1 }] },
+    options: chartOpts('#25d17a')
+  });
+
+  const u = data.userGrowth || [];
+  const c2 = document.getElementById('chart-analytics-users').getContext('2d');
+  document.getElementById('chart-analytics-users')._chart = new Chart(c2, {
+    type: 'bar', data: { labels: u.map(d=>d.date), datasets: [{ label: 'Users', data: u.map(d=>d.count), backgroundColor: 'rgba(79,158,255,0.5)', borderColor: '#4f9eff', borderWidth: 1 }] },
+    options: chartOpts('#4f9eff')
+  });
+
+  const c3 = document.getElementById('chart-analytics-tokens').getContext('2d');
+  document.getElementById('chart-analytics-tokens')._chart = new Chart(c3, {
+    type: 'line', data: { labels: ai.map(d=>d.date), datasets: [{ label: 'Tokens', data: ai.map(d=>d.tokens||0), borderColor: '#9d6eff', backgroundColor: 'rgba(157,110,255,0.08)', fill: true, tension: 0.4 }] },
+    options: chartOpts('#9d6eff')
+  });
+}
+
+// ===== Users =====
+async function loadUsers(page = 1) {
+  userPage = page;
+  const search = document.getElementById('user-search')?.value || '';
+  const data = await api(`/users?page=${page}&limit=20&search=${encodeURIComponent(search)}`);
+  document.getElementById('user-count').textContent = `${data.total} users`;
+  const tbody = document.getElementById('users-table');
+  tbody.innerHTML = (data.users || []).map(u => `
+    <tr>
+      <td><div style="font-weight:600;color:var(--text)">${esc(u.name)}</div><div class="mono" style="color:var(--text3)">${u.jid.split('@')[0]}</div></td>
+      <td><span class="badge-tier badge-${u.tier}">${tierLabel(u.tier)}</span></td>
+      <td><span class="mono">Lv.${u.level}</span></td>
+      <td><span class="mono">${u.coins.toLocaleString('id')}</span></td>
+      <td><span class="mono">${u.ai_usage_today}</span></td>
+      <td style="color:var(--text3);font-size:12px">${fmtDate(u.created_at)}</td>
+      <td>
+        <button class="btn btn-sm" onclick="editUser('${esc(u.jid)}','${esc(u.name)}','${u.tier}')">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="banUser('${esc(u.jid)}',${u.banned})">${u.banned?'Unban':'Ban'}</button>
+      </td>
+    </tr>
+  `).join('');
+
+  const pag = document.getElementById('user-pagination');
+  pag.innerHTML = Array.from({length: data.totalPages || 1}, (_,i) =>
+    `<button class="btn btn-sm ${i+1===page?'btn-success':''}" onclick="loadUsers(${i+1})">${i+1}</button>`
+  ).join('');
+}
+
+let searchTimer;
+function searchUsers() { clearTimeout(searchTimer); searchTimer = setTimeout(() => loadUsers(1), 400); }
+
+function editUser(jid, name, tier) {
+  document.getElementById('um-title').textContent = `Edit: ${name}`;
+  document.getElementById('um-jid').value = jid;
+  document.getElementById('um-tier').value = tier;
+  document.getElementById('user-modal').classList.add('open');
+}
+
+async function saveUser() {
+  const jid = document.getElementById('um-jid').value;
+  const tier = document.getElementById('um-tier').value;
+  const days = document.getElementById('um-days').value;
+  await api(`/users/${encodeURIComponent(jid)}/tier`, { method: 'PATCH', body: JSON.stringify({ tier, days: parseInt(days) }) });
+  closeModal('user-modal'); loadUsers(userPage);
+}
+
+async function banUser(jid, banned) {
+  await api(`/users/${encodeURIComponent(jid)}/ban`, { method: 'PATCH', body: JSON.stringify({ banned: !banned }) });
+  loadUsers(userPage);
+}
+
+// ===== Groups =====
+async function loadGroups() {
+  const data = await api('/groups');
+  const tbody = document.getElementById('groups-table');
+  tbody.innerHTML = (data.groups || []).map(g => `
+    <tr>
+      <td><div style="font-weight:600;color:var(--text)">${esc(g.name)}</div><div class="mono" style="color:var(--text3);font-size:11px">${g.jid.split('@')[0]}</div></td>
+      <td>${toggle(g.ai_enabled, g.jid, 'ai_enabled')}</td>
+      <td>${toggle(g.anti_link, g.jid, 'anti_link')}</td>
+      <td>${toggle(g.anti_spam, g.jid, 'anti_spam')}</td>
+      <td>${toggle(g.anti_badword, g.jid, 'anti_badword')}</td>
+      <td>${toggle(g.welcome_enabled, g.jid, 'welcome_enabled')}</td>
+    </tr>
+  `).join('');
+}
+
+function toggle(val, jid, field) {
+  const id = `tg-${jid}-${field}`.replace(/[^a-z0-9-]/gi,'_');
+  return `<label class="toggle" title="${field}">
+    <input type="checkbox" id="${id}" ${val?'checked':''} onchange="updateGroup('${esc(jid)}','${field}',this.checked)">
+    <span class="toggle-slider"></span>
+  </label>`;
+}
+
+async function updateGroup(jid, field, value) {
+  await api(`/groups/${encodeURIComponent(jid)}`, { method: 'PATCH', body: JSON.stringify({ [field]: value ? 1 : 0 }) });
+}
+
+// ===== Redeem =====
+async function loadRedeem() {
+  const data = await api('/redeem');
+  const tbody = document.getElementById('redeem-table');
+  tbody.innerHTML = (data.codes || []).map(c => `
+    <tr>
+      <td><span class="mono" style="color:var(--accent);font-size:13px">${c.code}</span></td>
+      <td><span class="badge-tier badge-${c.tier}">${tierLabel(c.tier)}</span></td>
+      <td>${c.duration_days} hari</td>
+      <td>${c.used_count}</td>
+      <td>${c.max_uses}</td>
+      <td style="color:var(--text3);font-size:12px">${fmtDate(c.created_at)}</td>
+      <td><button class="btn btn-sm btn-danger" onclick="deleteRedeem('${c.code}')">Hapus</button></td>
+    </tr>
+  `).join('');
+}
+
+function openRedeemModal() { document.getElementById('redeem-modal').classList.add('open'); }
+
+async function createRedeemCode() {
+  const tier = document.getElementById('rm-tier').value;
+  const days = document.getElementById('rm-days').value;
+  const maxUses = document.getElementById('rm-uses').value;
+  const data = await api('/redeem', { method: 'POST', body: JSON.stringify({ tier, days: parseInt(days), maxUses: parseInt(maxUses) }) });
+  closeModal('redeem-modal');
+  alert(`✅ Kode berhasil dibuat:\n${data.code}`);
+  loadRedeem();
+}
+
+async function deleteRedeem(code) {
+  if (!confirm(`Hapus kode ${code}?`)) return;
+  await api(`/redeem/${code}`, { method: 'DELETE' });
+  loadRedeem();
+}
+
+// ===== AI Logs =====
+async function loadAILogs() {
+  const data = await api('/ai-logs?limit=50');
+  const tbody = document.getElementById('ai-logs-table');
+  tbody.innerHTML = (data.logs || []).map(l => `
+    <tr>
+      <td>${esc(l.user_name || l.user_id?.slice(0,8) || '–')}</td>
+      <td><span class="badge-tier badge-${l.provider==='gemini'?'free':l.provider==='openai'?'vip':'premium'}">${l.provider}</span></td>
+      <td class="mono" style="font-size:11px">${l.model}</td>
+      <td class="mono">${l.tokens}</td>
+      <td>${l.success ? '<span style="color:var(--accent)">✓</span>' : '<span style="color:var(--red)">✗</span>'}</td>
+      <td style="color:var(--text3);font-size:12px">${fmtDateTime(l.timestamp)}</td>
+    </tr>
+  `).join('');
+}
+
+// ===== Helpers =====
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function tierLabel(t) { return {free:'🆓 Free',vip:'⭐ VIP',premium:'💎 Premium',owner:'👑 Owner'}[t] || t; }
+function fmtDate(ts) { return ts ? new Date(ts*1000).toLocaleDateString('id-ID') : '–'; }
+function fmtDateTime(ts) { return ts ? new Date(ts*1000).toLocaleString('id-ID') : '–'; }
+function formatUptime(s) {
+  const h = Math.floor(s/3600), m = Math.floor((s%3600)/60);
+  return `${h}j ${m}m`;
+}
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
+});
+
+// Auto-init if token exists
+if (TOKEN) initApp();
+</script>
+</body>
+</html>
